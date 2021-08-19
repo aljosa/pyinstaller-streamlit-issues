@@ -1,0 +1,51 @@
+on: [push]
+
+jobs:
+  build_releases:
+    name: Release builder
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        python: ['3.8.8'] # , '3.8.10', '3.9.6'
+        pyinstaller: ['4.3', '4.5.1']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+          architecture: 'x64'
+
+      - name: Build
+        shell: bash
+        run: |
+          SYSTEM_NAME=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')
+          python -m venv venv
+
+          if [ $SYSTEM_NAME = "windows" ]; then
+            source ./venv/Scripts/activate
+          else
+            brew install coreutils
+            source ./venv/bin/activate
+          fi
+
+          python -m pip install -U pip wheel streamlit==0.86.0
+          python -m pip install pyinstaller==${{ matrix.pyinstaller }}
+
+          ./build.sh
+
+          mkdir ~/.streamlit
+          printf '[general]\nemail = ""\n' > ~/.streamlit/credentials.toml
+
+          if [ $SYSTEM_NAME = "windows" ]; then
+            timeout 60 ./dist/main/main
+          else
+            gtimeout 60 ./dist/main/main
+          fi
