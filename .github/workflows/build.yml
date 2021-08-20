@@ -8,7 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest]
-        python: ['3.8.8'] # , '3.8.10', '3.9.6'
+        python: ['3.8.8']
         pyinstaller: ['4.3', '4.5.1']
 
     steps:
